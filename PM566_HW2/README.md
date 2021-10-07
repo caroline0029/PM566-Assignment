@@ -3,7 +3,7 @@ Assignment 2
 Caroline He
 10/6/2021
 
-Library packages
+#### Library packages
 
 ``` r
 library(data.table)
@@ -27,6 +27,8 @@ library(dplyr)
 
 ``` r
 library(dtplyr)
+library(ggplot2)
+library(RColorBrewer)
 ```
 
 # Data Wrangling
@@ -339,7 +341,7 @@ ind_reg[, smoke_gas_exposure :=
           fifelse(smoke == 0 & gasstove == 0, "no_expo",
                   fifelse(smoke == 1 & gasstove == 0, "smoke_expo",
                           fifelse(smoke == 0 & gasstove == 1, "gas_expo",
-                                  fifelse(smoke == 1 & gasstove == 1, "smole_gas_expo","none"))))]
+                                  fifelse(smoke == 1 & gasstove == 1, "smoke_gas_expo","none"))))]
 ```
 
 #### Creating a summary table of FEV
@@ -424,11 +426,266 @@ knitr::kable(summary_fev)
 | no\_expo             | 2047.460 | 332.8773 |   0.1365462 |  0.3440592 |
 | smoke\_expo          | 2092.556 | 297.2326 |   0.1538462 |  0.3655178 |
 | gas\_expo            | 2034.331 | 318.1718 |   0.1471748 |  0.3545131 |
-| smole\_gas\_expo     | 2029.273 | 299.6817 |   0.1258278 |  0.3327589 |
+| smoke\_gas\_expo     | 2029.273 | 299.6817 |   0.1258278 |  0.3327589 |
 
-# Data EDA
+# Data EDA and visualization
 
-The primary questions of interest are: \* What is the association
-between BMI and FEV (forced expiratory volume)? \* What is the
-association between smoke and gas exposure and FEV? \* What is the
-association between PM2.5 exposure and FEV?
+The primary questions of interest are:
+
+-   What is the association between BMI and FEV (forced expiratory
+    volume)?
+-   What is the association between smoke and gas exposure and FEV?
+-   What is the association between PM2.5 exposure and FEV?
+
+Follow the EDA checklist. Be sure to focus on the key variables.
+Visualization Create the following figures and interpret them. Be sure
+to include easily understandable axes, titles, and legends.
+
+#### Date EDA
+
+``` r
+dim(ind_reg)
+```
+
+    ## [1] 1200   51
+
+``` r
+head(ind_reg)
+```
+
+    ##    townname sid male race hispanic    agepft height weight      bmi asthma
+    ## 1:   Alpine 835    0    W        0 10.099932    143     69 15.33749      0
+    ## 2:   Alpine 838    0    O        1  9.486653    133     62 15.93183      0
+    ## 3:   Alpine 839    0    M        1 10.053388    142     86 19.38649      0
+    ## 4:   Alpine 840    0    W        0  9.965777    146     78 16.63283      0
+    ## 5:   Alpine 841    1    W        1 10.548939    150     78 15.75758      0
+    ## 6:   Alpine 842    1    M        1  9.489391    139     65 15.29189      0
+    ##    active_asthma father_asthma mother_asthma wheeze hayfever allergy
+    ## 1:             0             0             0      0        0       1
+    ## 2:             0             0             0      0        0       0
+    ## 3:             0             0             1      1        1       1
+    ## 4:             0             0             0      0        0       0
+    ## 5:             0             0             0      0        0       0
+    ## 6:             0             0             0      1        0       0
+    ##    educ_parent smoke pets gasstove      fev      fvc     mmef pm25_mass
+    ## 1:           3     0    1        0 2529.276 2826.316 3406.579      8.74
+    ## 2:           4     0    1        0 1737.793 1963.545 2133.110      8.74
+    ## 3:           3     1    1        0 2121.711 2326.974 2835.197      8.74
+    ## 4:           2     0    0        0 2466.791 2638.221 3466.464      8.74
+    ## 5:           5     0    1        0 2251.505 2594.649 2445.151      8.74
+    ## 6:           1     1    1        0 2188.716 2423.934 2524.599      8.74
+    ##    pm25_so4 pm25_no3 pm25_nh4 pm25_oc pm25_ec pm25_om pm10_oc pm10_ec pm10_tc
+    ## 1:     1.73     1.59     0.88    2.54    0.48    3.04    3.25    0.49    3.75
+    ## 2:     1.73     1.59     0.88    2.54    0.48    3.04    3.25    0.49    3.75
+    ## 3:     1.73     1.59     0.88    2.54    0.48    3.04    3.25    0.49    3.75
+    ## 4:     1.73     1.59     0.88    2.54    0.48    3.04    3.25    0.49    3.75
+    ## 5:     1.73     1.59     0.88    2.54    0.48    3.04    3.25    0.49    3.75
+    ## 6:     1.73     1.59     0.88    2.54    0.48    3.04    3.25    0.49    3.75
+    ##    formic acetic  hcl hno3 o3_max o3106 o3_24   no2  pm10 no_24hr pm2_5_fr
+    ## 1:   1.03   2.49 0.41 1.98  65.82 55.05 41.23 12.18 24.73    2.48    10.28
+    ## 2:   1.03   2.49 0.41 1.98  65.82 55.05 41.23 12.18 24.73    2.48    10.28
+    ## 3:   1.03   2.49 0.41 1.98  65.82 55.05 41.23 12.18 24.73    2.48    10.28
+    ## 4:   1.03   2.49 0.41 1.98  65.82 55.05 41.23 12.18 24.73    2.48    10.28
+    ## 5:   1.03   2.49 0.41 1.98  65.82 55.05 41.23 12.18 24.73    2.48    10.28
+    ## 6:   1.03   2.49 0.41 1.98  65.82 55.05 41.23 12.18 24.73    2.48    10.28
+    ##    iacid oacid total_acids       lon      lat obesity_level smoke_gas_exposure
+    ## 1:  2.39  3.52         5.5 -116.7664 32.83505        normal            no_expo
+    ## 2:  2.39  3.52         5.5 -116.7664 32.83505        normal            no_expo
+    ## 3:  2.39  3.52         5.5 -116.7664 32.83505        normal         smoke_expo
+    ## 4:  2.39  3.52         5.5 -116.7664 32.83505        normal            no_expo
+    ## 5:  2.39  3.52         5.5 -116.7664 32.83505        normal            no_expo
+    ## 6:  2.39  3.52         5.5 -116.7664 32.83505        normal         smoke_expo
+
+``` r
+tail(ind_reg)
+```
+
+    ##    townname  sid male race hispanic    agepft height weight      bmi asthma
+    ## 1:   Upland 1866    0    O        1  9.806982    139     60 14.11559      0
+    ## 2:   Upland 1867    0    M        1  9.618070    140     71 16.46568      0
+    ## 3:   Upland 2031    1    W        0  9.798768    135     83 20.70084      0
+    ## 4:   Upland 2032    1    W        0  9.549624    137     59 14.28855      0
+    ## 5:   Upland 2033    0    M        0 10.121834    130     67 18.02044      0
+    ## 6:   Upland 2053    0    W        0  9.966942    138     82 19.41148      0
+    ##    active_asthma father_asthma mother_asthma wheeze hayfever allergy
+    ## 1:             0             0             0      0        0       0
+    ## 2:             0             1             0      0        0       0
+    ## 3:             0             0             0      1        0       1
+    ## 4:             0             0             1      1        1       1
+    ## 5:             1             0             0      1        1       0
+    ## 6:             0             0             0      0        0       0
+    ##    educ_parent smoke pets gasstove      fev      fvc     mmef pm25_mass
+    ## 1:           3     0    1        0 1691.275 1928.859 1890.604     22.46
+    ## 2:           3     0    1        0 1733.338 1993.040 2072.643     22.46
+    ## 3:           3     0    1        1 2034.177 2505.535 1814.075     22.46
+    ## 4:           3     0    1        1 2077.703 2275.338 2706.081     22.46
+    ## 5:           3     0    1        1 1929.866 2122.148 2558.054     22.46
+    ## 6:           3     0    1        0 2120.266 2443.876 2447.494     22.46
+    ##    pm25_so4 pm25_no3 pm25_nh4 pm25_oc pm25_ec pm25_om pm10_oc pm10_ec pm10_tc
+    ## 1:     2.65     7.75     2.96    6.49    1.19    7.79    8.32    1.22    9.54
+    ## 2:     2.65     7.75     2.96    6.49    1.19    7.79    8.32    1.22    9.54
+    ## 3:     2.65     7.75     2.96    6.49    1.19    7.79    8.32    1.22    9.54
+    ## 4:     2.65     7.75     2.96    6.49    1.19    7.79    8.32    1.22    9.54
+    ## 5:     2.65     7.75     2.96    6.49    1.19    7.79    8.32    1.22    9.54
+    ## 6:     2.65     7.75     2.96    6.49    1.19    7.79    8.32    1.22    9.54
+    ##    formic acetic  hcl hno3 o3_max o3106 o3_24   no2 pm10 no_24hr pm2_5_fr iacid
+    ## 1:   2.67   4.73 0.46 4.03  63.83  46.5  22.2 37.97 40.8   18.48    27.73  4.49
+    ## 2:   2.67   4.73 0.46 4.03  63.83  46.5  22.2 37.97 40.8   18.48    27.73  4.49
+    ## 3:   2.67   4.73 0.46 4.03  63.83  46.5  22.2 37.97 40.8   18.48    27.73  4.49
+    ## 4:   2.67   4.73 0.46 4.03  63.83  46.5  22.2 37.97 40.8   18.48    27.73  4.49
+    ## 5:   2.67   4.73 0.46 4.03  63.83  46.5  22.2 37.97 40.8   18.48    27.73  4.49
+    ## 6:   2.67   4.73 0.46 4.03  63.83  46.5  22.2 37.97 40.8   18.48    27.73  4.49
+    ##    oacid total_acids       lon      lat obesity_level smoke_gas_exposure
+    ## 1:   7.4       11.43 -117.6484 34.09751        normal            no_expo
+    ## 2:   7.4       11.43 -117.6484 34.09751        normal            no_expo
+    ## 3:   7.4       11.43 -117.6484 34.09751        normal           gas_expo
+    ## 4:   7.4       11.43 -117.6484 34.09751        normal           gas_expo
+    ## 5:   7.4       11.43 -117.6484 34.09751        normal           gas_expo
+    ## 6:   7.4       11.43 -117.6484 34.09751        normal            no_expo
+
+``` r
+summary(is.na(ind_reg))
+```
+
+    ##   townname          sid             male            race        
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##   hispanic         agepft          height          weight       
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##     bmi            asthma        active_asthma   father_asthma  
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##  mother_asthma     wheeze         hayfever        allergy       
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##  educ_parent       smoke            pets          gasstove      
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##     fev             fvc             mmef         pm25_mass      
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##   pm25_so4        pm25_no3        pm25_nh4        pm25_oc       
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##   pm25_ec         pm25_om         pm10_oc         pm10_ec       
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##   pm10_tc          formic          acetic           hcl         
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##     hno3           o3_max          o3106           o3_24        
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##     no2             pm10          no_24hr         pm2_5_fr      
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##    iacid           oacid         total_acids        lon         
+    ##  Mode :logical   Mode :logical   Mode :logical   Mode :logical  
+    ##  FALSE:1200      FALSE:1200      FALSE:1200      FALSE:1200     
+    ##     lat          obesity_level   smoke_gas_exposure
+    ##  Mode :logical   Mode :logical   Mode :logical     
+    ##  FALSE:1200      FALSE:1200      FALSE:1200
+
+The dataset seems to be good.
+
+#### Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
+
+``` r
+#scatter plot
+ind_reg %>%
+    ggplot(mapping = aes(x = bmi, y = fev)) + 
+    geom_point(mapping = aes(color = townname)) + 
+    geom_smooth(method = "lm", color = "black", size = 0.5) +
+    facet_wrap(~ townname, nrow = 5)
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](README_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
+    labs(
+      x = "bmi",
+      y = "Forced expiatory volume in 1 second (ml)",
+      title = "scatterplots of BMI vs FEV by town name")
+```
+
+    ## $x
+    ## [1] "bmi"
+    ## 
+    ## $y
+    ## [1] "Forced expiatory volume in 1 second (ml)"
+    ## 
+    ## $title
+    ## [1] "scatterplots of BMI vs FEV by town name"
+    ## 
+    ## attr(,"class")
+    ## [1] "labels"
+
+Based the graph, there was a positive association between BMI and forced
+expiatory volume in 1 second(ml) for all towns.
+
+#### Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
+
+``` r
+#histograms of FEV by BMI
+ind_reg %>%
+    ggplot(mapping = aes(x = fev)) + 
+    geom_histogram(mapping = aes (fill = obesity_level)) +
+    scale_fill_brewer(palette = "BuPu") +
+    labs(
+      x = "Forced expiatory volume in 1 second (ml)",
+      y = "Count",
+      title = "Histogram of FEV by obesity level")
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+The normal and obese obesity level almost followed a normal
+distribution. And for overweight and underweight obesity level, the
+distribution required more information to be explained.
+
+``` r
+#histograms of FEV by smoke/gas exposure
+ind_reg %>%
+    ggplot(mapping = aes(x = fev)) + 
+    geom_histogram(mapping = aes (fill = smoke_gas_exposure)) +
+    scale_fill_brewer(palette = "BuPu") +
+    labs(
+      x = "Forced expiatory volume in 1 second (ml)",
+      y = "Count",
+      title = "Histogram of FEV by smoke_gas_expose")
+```
+
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+The gas\_expose seemed to have normal distribution, whereas the
+no\_expose, smoke\_expose and smoke\_gas\_expo seemed to have a bi-modal
+distribution.
+
+#### Bar chart of BMI by smoke/gas exposure.
+
+``` r
+ind_reg %>%
+    ggplot(mapping = aes(x = obesity_level)) + 
+    geom_bar(mapping = aes (fill = smoke_gas_exposure)) +
+    scale_fill_brewer(palette = "BuPu") +
+    labs(
+      x = "obesity level",
+      y = "Count",
+      title = "Barplot of BMI by smoke_gas_expose")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+Among all obesity levels, exposure of gas were the greatest part based
+on the bar plot. And the next greatest part was no exposure.
+Smoke\_gas\_exposure was the third greatest part and smoke\_exposure was
+the smallest.
+
+#### Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
