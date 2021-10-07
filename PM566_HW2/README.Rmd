@@ -245,7 +245,6 @@ Among all obesity levels, exposure of gas were the greatest part based on the ba
 
 #### Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
 ```{r}
-
 ```
 
 
