@@ -1,0 +1,140 @@
+---
+title: "PM566_HW1"
+author: "Caroline He"
+date: "9/21/2021"
+output: github_document
+---
+## Assignment Description
+We will work with air pollution data from the U.S. Environmental Protection Agency (EPA). The EPA has a national monitoring network of air pollution sites. 
+The primary question is whether daily concentrations of PM2.5 (particulate matter air pollution with aerodynamic diameter less than 2.5 m) have decreased in California over the last 15 years (from 2004 to 2019).
+
+## R packages setup
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(data.table)
+library(tidyverse)
+```
+
+# Step 1: Given the formulated question, conduct EDA Checklist items 2-4. 
+(a) Download 2004 and 2019 data for all sites in California from the EPA Air Quality Data website. 
+(b) Read in the data using data.table(). For each of the two datasets, check the dimensions, headers, footers, variable names and variable types. 
+```{r read in & check data}
+# Read in data set
+PM2.5_2004 <- data.table::fread("2004_CA_PM2.5.csv")
+PM2.5_2019 <- data.table::fread("2019_CA_PM2.5.csv")
+
+# Check data dimensions
+dim(PM2.5_2004)
+dim(PM2.5_2019)
+
+# Check data headers
+head(PM2.5_2004)
+head(PM2.5_2019)
+
+# Check data footers
+tail(PM2.5_2004)
+tail(PM2.5_2019)
+
+# Check variables' names and types
+str(PM2.5_2004)
+str(PM2.5_2019)
+```
+
+(c) Check for any data issues, particularly in the key variables.
+```{r check key variables}
+# Check the key variables & remove "NA" data
+table(PM2.5_2004$`Daily Mean PM2.5 Concentration`)
+summary(PM2.5_2004$`Daily Mean PM2.5 Concentration`)
+mean(is.na(PM2.5_2004$`Daily Mean PM2.5 Concentration`))
+table(PM2.5_2019$`Daily Mean PM2.5 Concentration`)
+summary(PM2.5_2019$`Daily Mean PM2.5 Concentration`)
+mean(is.na(PM2.5_2019$`Daily Mean PM2.5 Concentration`))
+
+# Remove daily mean PM2.5 concentration < 0
+PM2.5_2004 <- PM2.5_2004[`Daily Mean PM2.5 Concentration` >= 0]
+PM2.5_2019 <- PM2.5_2019[`Daily Mean PM2.5 Concentration` >= 0]
+
+# Re-check the key variables
+summary(PM2.5_2004$`Daily Mean PM2.5 Concentration`)
+mean(is.na(PM2.5_2004$`Daily Mean PM2.5 Concentration`))
+summary(PM2.5_2019$`Daily Mean PM2.5 Concentration`)
+mean(is.na(PM2.5_2019$`Daily Mean PM2.5 Concentration`))
+```
+By checking the Daily Mean PM2.5 concentration variables, the statistical summary show that there were several values which were equal to or less than 0. Those values may be due to calibration errors. Those values have been removed.
+By checking the key variables, there were no "NA" value in key variables.
+Based on the statistical summary of daily mean PM2.5 concentration for 2004 and 2019, the 1st Qu, Median, Mean, 3rd Qu and Max value of 2019 were lower than those of 2004.
+
+# Step 2: Combine the two years of data into one data frame. 
+Use the Date variable to create a new column for year, which will serve as an identifier. Change the names of the key variables so that they are easier to refer to in your code.
+```{r combine data frames}
+combined <- rbind(PM2.5_2004, PM2.5_2019)
+combined$Date <- as.Date(combined$Date,"%m/%d/%Y")
+combined$year <- year (combined$Date)
+colnames(combined)[which(names(combined) == "Daily Mean PM2.5 Concentration")] <- "conc"
+colnames(combined)[which(names(combined) == "SITE_LATITUDE")] <- "lat"
+colnames(combined)[which(names(combined) == "SITE_LONGITUDE")] <- "log"
+colnames(combined)[which(names(combined) == "Site Name")] <- "site_name"
+combined$year <- as.character(combined$year)
+```
+
+# Step 3: Create a basic map in leaflet() that shows the locations of the sites. 
+Summarize the spatial distribution of the monitoring sites.
+```{r}
+library(leaflet)
+pal <- colorFactor(c('light sky blue','grey'),
+                    domain = combined$year)
+map <- leaflet(combined) %>%
+  addProviderTiles('CartoDB.Positron') %>%
+  addCircles(
+    lat = ~lat, lng=~log,
+    opacity = 1, fillOpacity = 1, radius = 300
+    ) %>%
+  addLegend('bottomleft', pal = pal, values = combined$year,
+            title = 'year', opacity = 1)
+```
+
+
+# Step 4: Check for any missing or implausible values of PM in the combined dataset. 
+Explore the proportions of each and provide a summary of any temporal patterns you see in these observations.
+```{r check for missing data}
+dim(combined)
+sum(is.na(combined$Date))
+sum(is.na(combined$conc))
+sum(is.na(combined$log))
+sum(is.na(combined$lat))
+sum(is.na(combined$site_name))
+table(combined$site_name)
+```
+There were 331 missing data in site_name. The proportion was 0.46%.
+
+# Step 5: Explore the main question of interest at three different spatial levels. 
+Create exploratory plots (e.g. boxplots, histograms, line plots) and summary statistics that best suit each level of data. Be sure to write up explanations of what you observe in these data.
+## State Level
+```{r state level}
+library(ggplot2)
+ggplot(combined[!is.na(conc)]) +
+  geom_histogram(mapping = aes( x = conc, color = year, fill = year), binwidth = 5) +
+  xlim(0,100)
+```
+The histogram show that the mean PM2.5 concentration for 2019 were generally lower than value for 2004.
+
+## County Level
+```{r}
+ggplot(combined[!is.na(conc)]) +
+  geom_point(mapping = aes(x = COUNTY, y = conc, color = year))+
+  theme(axis.text.x = element_text(size = 6, angle = 45))
+```
+After zooming up to county size, it was obvious that almost every county show a lower PM2.5 concentration in 2019 than in 2004.
+
+## Site in Los Angeles
+```{r}
+LA_site <- filter(combined, COUNTY == "Los Angeles")
+LA_site[!is.na(conc) & !is.na(site_name)] %>%
+  ggplot() +
+  geom_violin(mapping = aes(x = site_name, y = conc, color = year, fill = year)) +
+  theme(axis.text.x = element_text(size = 6, angle = 45))
+```
+Though there were some missing data for California, it still could be told that PM2.5 decreased from 2004 to 2019.

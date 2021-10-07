@@ -1,0 +1,13 @@
+---
+title: "Assignment 2"
+author: "Caroline He"
+date: "10/6/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
