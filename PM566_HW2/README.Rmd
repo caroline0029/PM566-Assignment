@@ -8,6 +8,177 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+Library packages
+```{r}
+library(data.table)
+library(dplyr)
+library(dtplyr)
+```
+
+# Data Wrangling
+
+#### Download and read in the data
+```{r}
+if (!file.exists("chs_individual.csv")) {
+download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_individual.csv",
+              destfile = "chs_individual.csv", 
+              method="libcurl", 
+              timeout = 60
+              )
+}
+individual <- data.table::fread("chs_individual.csv")
+
+if (!file.exists("chs_regional.csv")) {
+download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_regional.csv",
+              destfile = "chs_regional.csv", 
+              method="libcurl", 
+              timeout = 60
+              )
+}
+regional <- data.table::fread("chs_regional.csv")
+```
+#### Merge the data
+```{r}
+ind_reg <- merge(
+  x = individual,
+  y = regional,
+  by.x = "townname",
+  by.y = "townname",
+  all.x = TRUE,
+  all.y = FALSE
+)
+```
+
+#### Check for the Duplicate
+After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches.
+In the case of missing values, impute data using the average within the variables “male” and “hispanic.”
+```{r}
+dim(ind_reg)
+summary(is.na(ind_reg))
+```
+
+```{r}
+# Group the data by male and Hispanic characteristics
+male_hispanic <- ind_reg[male == 1 & hispanic == 1]
+```
+
+```{r}
+#replacing NAs by means
+ind_reg[is.na(agepft), agepft := mean(male_hispanic$agepft, na.rm = TRUE)]
+ind_reg[is.na(height), height := mean(male_hispanic$height, na.rm = TRUE)]
+ind_reg[is.na(weight), weight := mean(male_hispanic$weight, na.rm = TRUE)]
+ind_reg[is.na(bmi), bmi := mean(male_hispanic$bmi, na.rm = TRUE)]
+ind_reg[is.na(asthma), asthma := mean(male_hispanic$asthma, na.rm = TRUE)]
+ind_reg[is.na(father_asthma), father_asthma := mean(male_hispanic$father_asthma, na.rm = TRUE)]
+ind_reg[is.na(mother_asthma), mother_asthma := mean(male_hispanic$mother_asthma, na.rm = TRUE)]
+ind_reg[is.na(wheeze), wheeze := mean(male_hispanic$wheeze, na.rm = TRUE)]
+ind_reg[is.na(hayfever), hayfever := mean(male_hispanic$hayfever, na.rm = TRUE)]
+ind_reg[is.na(allergy), allergy := mean(male_hispanic$allergy, na.rm = TRUE)]
+ind_reg[is.na(educ_parent), educ_parent := mean(male_hispanic$educ_parent, na.rm = TRUE)]
+ind_reg[is.na(smoke), smoke := mean(male_hispanic$smoke, na.rm = TRUE)]
+ind_reg[is.na(gasstove), gasstove := mean(male_hispanic$gasstove, na.rm = TRUE)]
+ind_reg[is.na(fev), fev := mean(male_hispanic$fev, na.rm = TRUE)]
+ind_reg[is.na(fvc), fvc := mean(male_hispanic$fvc, na.rm = TRUE)]
+ind_reg[is.na(mmef), mmef := mean(male_hispanic$mmef, na.rm = TRUE)]
+ind_reg[is.na(no_24hr), no_24hr := mean(male_hispanic$no_24hr, na.rm = TRUE)]
+ind_reg[is.na(pm2_5_fr), pm2_5_fr := mean(male_hispanic$pm2_5_fr, na.rm = TRUE)]
+summary(is.na(ind_reg))
+suppressWarnings(warning("ind_reg"))
+```
+All NAs were replaced by means
+
+#### Create a new categorical variable named “obesity_level” and a summary table
+Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI<14; normal BMI 14-22; overweight BMI 22-24; obese BMI>24). To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
+```{r}
+#create a new variable
+ind_reg[, obesity_level := 
+          fifelse(bmi < 14, "underweight",
+                  fifelse(bmi >= 14 & bmi < 22, "normal",
+                          fifelse(bmi >= 22 & bmi < 24, "overweight",
+                                  fifelse(bmi >= 24, "obese", "none"))))]
+```
+
+```{r}
+#create a summary table
+summary_obesity <- ind_reg[,.(
+  max_bmi = max(bmi),
+  min_bmi = min(bmi),
+  total = length(bmi)
+), by = obesity_level]
+knitr::kable(summary_obesity)
+```
+
+#### Create categorical variable “smoke_gas_exposure”
+Create another categorical variable named “smoke_gas_exposure” that summarizes “Second Hand Smoke” and “Gas Stove.” The variable should have four categories in total.
+
+```{r}
+ind_reg[, smoke_gas_exposure := 
+          fifelse(smoke == 0 & gasstove == 0, "no_expo",
+                  fifelse(smoke == 1 & gasstove == 0, "smoke_expo",
+                          fifelse(smoke == 0 & gasstove == 1, "gas_expo",
+                                  fifelse(smoke == 1 & gasstove == 1, "smole_gas_expo","none"))))]
+```
+#### Creating a summary table of FEV
+Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiatory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure.”
+```{r}
+#by town name
+summary_fev <- ind_reg[,.(
+  avg_fev = mean(fev),
+  sd_fev = sd(fev),
+  avg_asthma = mean(asthma),
+  sd_asthma = sd(asthma)
+), by = townname]
+knitr::kable(summary_fev)
+```
+
+```{r}
+#by gender
+summary_fev <- ind_reg[,.(
+  avg_fev = mean(fev),
+  sd_fev = sd(fev),
+  avg_asthma = mean(asthma),
+  sd_asthma = sd(asthma)
+), by = male]
+knitr::kable(summary_fev)
+```
+
+```{r}
+#by obesity level
+summary_fev <- ind_reg[,.(
+  avg_fev = mean(fev),
+  sd_fev = sd(fev),
+  avg_asthma = mean(asthma),
+  sd_asthma = sd(asthma)
+), by = obesity_level]
+knitr::kable(summary_fev)
+```
+
+```{r}
+#by smoke gas exposure
+summary_fev <- ind_reg[,.(
+  avg_fev = mean(fev),
+  sd_fev = sd(fev),
+  avg_asthma = mean(asthma),
+  sd_asthma = sd(asthma)
+), by = smoke_gas_exposure]
+knitr::kable(summary_fev)
+```
+
+# Data EDA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
