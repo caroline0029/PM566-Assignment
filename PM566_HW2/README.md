@@ -425,3 +425,10 @@ knitr::kable(summary_fev)
 | smoke\_expo          | 2092.556 | 297.2326 |   0.1538462 |  0.3655178 |
 | gas\_expo            | 2034.331 | 318.1718 |   0.1471748 |  0.3545131 |
 | smole\_gas\_expo     | 2029.273 | 299.6817 |   0.1258278 |  0.3327589 |
+
+# Data EDA
+
+The primary questions of interest are: \* What is the association
+between BMI and FEV (forced expiratory volume)? \* What is the
+association between smoke and gas exposure and FEV? \* What is the
+association between PM2.5 exposure and FEV?

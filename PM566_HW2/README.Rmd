@@ -165,7 +165,10 @@ knitr::kable(summary_fev)
 ```
 
 # Data EDA
-s
+The primary questions of interest are: 
+* What is the association between BMI and FEV (forced expiratory volume)? 
+* What is the association between smoke and gas exposure and FEV? 
+* What is the association between PM2.5 exposure and FEV?
 
 
 
