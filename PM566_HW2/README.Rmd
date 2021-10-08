@@ -193,7 +193,7 @@ ind_reg %>%
     ggplot(mapping = aes(x = bmi, y = fev)) + 
     geom_point(mapping = aes(color = townname)) + 
     geom_smooth(method = "lm", color = "black", size = 0.5) +
-    facet_wrap(~ townname, nrow = 5)
+    facet_wrap(~ townname, nrow = 5) +
     labs(
       x = "bmi",
       y = "Forced expiatory volume in 1 second (ml)",
