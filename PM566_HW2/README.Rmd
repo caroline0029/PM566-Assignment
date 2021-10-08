@@ -2,24 +2,26 @@
 title: "Assignment 2"
 author: "Caroline He"
 date: "10/6/2021"
+always_allow_html: yes
 output: github_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-#### Library packages
-```{r packages}
+### Library packages
+```{r package}
 library(data.table)
 library(dplyr)
 library(dtplyr)
 library(ggplot2)
 library(RColorBrewer)
+library(leaflet)
 ```
 
 # Data Wrangling
 
-#### Download and read in the data
+### Download and read in the data
 ```{r download_data}
 if (!file.exists("chs_individual.csv")) {
 download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/01_chs/chs_individual.csv",
@@ -39,7 +41,7 @@ download.file("https://raw.githubusercontent.com/USCbiostats/data-science-data/m
 }
 regional <- data.table::fread("chs_regional.csv")
 ```
-#### Merge the data
+### Merge the data
 ```{r merge}
 ind_reg <- merge(
   x = individual,
@@ -51,7 +53,7 @@ ind_reg <- merge(
 )
 ```
 
-#### Check for the Duplicate
+### Check for the Duplicate
 After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches.
 In the case of missing values, impute data using the average within the variables “male” and “hispanic.”
 ```{r check_data}
@@ -64,7 +66,7 @@ summary(is.na(ind_reg))
 male_hispanic <- ind_reg[male == 1 & hispanic == 1]
 ```
 
-```{r remove_NA}
+```{r remove_NA, warning=FALSE}
 #replacing NAs by means
 ind_reg[is.na(agepft), agepft := mean(male_hispanic$agepft, na.rm = TRUE)]
 ind_reg[is.na(height), height := mean(male_hispanic$height, na.rm = TRUE)]
@@ -85,11 +87,10 @@ ind_reg[is.na(mmef), mmef := mean(male_hispanic$mmef, na.rm = TRUE)]
 ind_reg[is.na(no_24hr), no_24hr := mean(male_hispanic$no_24hr, na.rm = TRUE)]
 ind_reg[is.na(pm2_5_fr), pm2_5_fr := mean(male_hispanic$pm2_5_fr, na.rm = TRUE)]
 summary(is.na(ind_reg))
-suppressWarnings(warning("ind_reg"))
 ```
 All NAs were replaced by means
 
-#### Create a new categorical variable named “obesity_level” and a summary table
+### Create a new categorical variable named “obesity_level” and a summary table
 Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI<14; normal BMI 14-22; overweight BMI 22-24; obese BMI>24). To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
 ```{r obesity_level}
 #create a new variable
@@ -110,17 +111,18 @@ summary_obesity <- ind_reg[,.(
 knitr::kable(summary_obesity)
 ```
 
-#### Create categorical variable “smoke_gas_exposure”
+### Create categorical variable “smoke_gas_exposure”
 Create another categorical variable named “smoke_gas_exposure” that summarizes “Second Hand Smoke” and “Gas Stove.” The variable should have four categories in total.
 
 ```{r smoke_gas_exposure}
+#Create a new variable
 ind_reg[, smoke_gas_exposure := 
           fifelse(smoke == 0 & gasstove == 0, "no_expo",
                   fifelse(smoke == 1 & gasstove == 0, "smoke_expo",
                           fifelse(smoke == 0 & gasstove == 1, "gas_expo",
                                   fifelse(smoke == 1 & gasstove == 1, "smoke_gas_expo","none"))))]
 ```
-#### Creating a summary table of FEV
+### Creating a summary table of FEV
 Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiatory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure.”
 ```{r summary_townname}
 #by town name
@@ -175,7 +177,7 @@ The primary questions of interest are:
 
 Follow the EDA checklist. Be sure to focus on the key variables. Visualization Create the following figures and interpret them. Be sure to include easily understandable axes, titles, and legends.
 
-#### Date EDA
+### Date EDA
 ```{r}
 dim(ind_reg)
 head(ind_reg)
@@ -184,7 +186,7 @@ summary(is.na(ind_reg))
 ```
 The dataset seems to be good.
 
-#### Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
+### Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
 ```{r}
 #scatter plot
 ind_reg %>%
@@ -200,7 +202,7 @@ ind_reg %>%
 
 Based the graph, there was a positive association between BMI and forced expiatory volume in 1 second(ml) for all towns.
 
-#### Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
+### Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
 ```{r}
 #histograms of FEV by BMI
 ind_reg %>%
@@ -229,8 +231,9 @@ ind_reg %>%
 
 The gas_expose seemed to have normal distribution, whereas the no_expose, smoke_expose and smoke_gas_expo seemed to have a bi-modal distribution. 
 
-#### Bar chart of BMI by smoke/gas exposure.
+### Bar chart of BMI by smoke/gas exposure.
 ```{r}
+#Bar chart
 ind_reg %>%
     ggplot(mapping = aes(x = obesity_level)) + 
     geom_bar(mapping = aes (fill = smoke_gas_exposure)) +
@@ -238,15 +241,64 @@ ind_reg %>%
     labs(
       x = "obesity level",
       y = "Count",
-      title = "Barplot of BMI by smoke_gas_expose")
+      title = "Barchart of BMI by smoke_gas_expose")
 ```
 
 Among all obesity levels, exposure of gas were the greatest part based on the bar plot. And the next greatest part was no exposure. Smoke_gas_exposure was the third greatest part and smoke_exposure was the smallest.
 
-#### Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
+### Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
 ```{r}
+#statistical summary of fev by bmi
+ind_reg %>%
+    ggplot() +
+    stat_summary(mapping = aes(x = obesity_level, y = fev),
+                 fun.min = min,
+                 fun.max = max,
+                 fun = median) +
+    labs(
+      y = "Forced expiatory volume in 1 second (ml)",
+      x = "obesity level",
+      title = "statistical summary of fev by obesity level")
 ```
 
+```{r}
+ind_reg %>%
+    ggplot() +
+    stat_summary(mapping = aes(x = smoke_gas_exposure, y = fev),
+                 fun.min = min,
+                 fun.max = max,
+                 fun = median) +
+    labs(
+      y = "Forced expiatory volume in 1 second (ml)",
+      x = "smoke/gas exposure",
+      title = "statistical summary of fev by smoke/gas exposure")
+```
 
+### A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities.
+```{r leaflet}
+temp.pal <- colorNumeric(palette = "Purples", domain=ind_reg$pm25_mass)
+map <- leaflet(ind_reg) %>% 
+  addProviderTiles('CartoDB.Positron') %>% 
+  addCircles(
+    lat = ~lat, lng=~lon,
+    label = ind_reg$townname, color = ~ temp.pal(pm25_mass),
+    opacity = 1, fillOpacity = 1, radius = 500
+    ) %>%
+  addLegend('bottomleft', pal=temp.pal, values=ind_reg$pm25_mass,
+          title='concentrations of PM2.5 mass in each of the CHS communities', opacity=1)
+map
+```
 
+### Choose a visualization to examine whether PM2.5 mass is associated with FEV.
+```{r}
+ind_reg %>%
+    ggplot(mapping = aes(x = pm25_mass, y = fev)) + 
+    geom_point(mapping = aes(color = "blue")) + 
+    geom_smooth(method = "lm", color = "black", size = 1) +
+    labs(
+      x = "PM2.5 mass",
+      y = "Forced expiatory volume in 1 second (ml)",
+      title = "scatterplots of PM2.5_mass vs FEV")
+```
 
+There was no obvious association between PM2.5 mass and fev.
