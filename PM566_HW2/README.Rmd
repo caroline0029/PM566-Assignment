@@ -197,7 +197,7 @@ ind_reg %>%
     labs(
       x = "bmi",
       y = "Forced expiatory volume in 1 second (ml)",
-      title = "scatterplots of BMI vs FEV by town name")
+      title = "scatterplots of BMI vs FEV by town name") 
 ```
 
 Based the graph, there was a positive association between BMI and forced expiatory volume in 1 second(ml) for all towns.
