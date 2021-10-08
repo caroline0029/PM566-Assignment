@@ -261,6 +261,8 @@ ind_reg %>%
       title = "statistical summary of fev by obesity level")
 ```
 
+The statistical summary indicated that the normal group had the greatest range whereas overweight and underweight had relatively smaller range. Obese and overweight groups had relatively higher median. The normal group had the third greatest median and underweight groups had the smallest median value. 
+
 ```{r}
 ind_reg %>%
     ggplot() +
@@ -273,6 +275,8 @@ ind_reg %>%
       x = "smoke/gas exposure",
       title = "statistical summary of fev by smoke/gas exposure")
 ```
+
+The statistical summary indicated that all four groups had similar median values. The ranges of gas_exposure and no_exposure groups were relatively greater. The smoke_gas_exposure had the smallest range among four groups.
 
 ### A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities.
 ```{r leaflet}
@@ -288,6 +292,8 @@ map <- leaflet(ind_reg) %>%
           title='concentrations of PM2.5 mass in each of the CHS communities', opacity=1)
 map
 ```
+
+The dots on the map corresponded to each CHS community. Mira Loma The CHS community around Mira Loma had the highest PM2.5 mass whereas CHS community around Long Beach had the lowest PM2.5 masses.
 
 ### Choose a visualization to examine whether PM2.5 mass is associated with FEV.
 ```{r}
