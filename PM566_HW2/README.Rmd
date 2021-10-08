@@ -299,7 +299,7 @@ The dots on the map corresponded to each CHS community. Mira Loma The CHS commun
 ```{r}
 ind_reg %>%
     ggplot(mapping = aes(x = pm25_mass, y = fev)) + 
-    geom_point(mapping = aes(color = "blue")) + 
+    geom_point(mapping = aes(color = "blue")) +  
     geom_smooth(method = "lm", color = "black", size = 1) +
     labs(
       x = "PM2.5 mass",
