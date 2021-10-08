@@ -124,11 +124,15 @@ ind_reg[, smoke_gas_exposure :=
 ```
 ### Creating a summary table of FEV
 Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiatory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure.”
-```{r summary_townname}
+```{r}
 #by town name
+ind_reg[, fev_sec := fev/60]
+```
+
+```{r summary_townname}
 summary_fev <- ind_reg[,.(
-  avg_fev = mean(fev),
-  sd_fev = sd(fev),
+  avg_fev = mean(fev_sec),
+  sd_fev = sd(fev_sec),
   avg_asthma = mean(asthma),
   sd_asthma = sd(asthma)
 ), by = townname]
@@ -138,8 +142,8 @@ knitr::kable(summary_fev)
 ```{r summary_gender}
 #by gender
 summary_fev <- ind_reg[,.(
-  avg_fev = mean(fev),
-  sd_fev = sd(fev),
+  avg_fev = mean(fev_sec),
+  sd_fev = sd(fev_sec),
   avg_asthma = mean(asthma),
   sd_asthma = sd(asthma)
 ), by = male]
@@ -149,8 +153,8 @@ knitr::kable(summary_fev)
 ```{r summary_obe_level}
 #by obesity level
 summary_fev <- ind_reg[,.(
-  avg_fev = mean(fev),
-  sd_fev = sd(fev),
+  avg_fev = mean(fev_sec),
+  sd_fev = sd(fev_sec),
   avg_asthma = mean(asthma),
   sd_asthma = sd(asthma)
 ), by = obesity_level]
@@ -160,8 +164,8 @@ knitr::kable(summary_fev)
 ```{r summary_smoke_gas}
 #by smoke gas exposure
 summary_fev <- ind_reg[,.(
-  avg_fev = mean(fev),
-  sd_fev = sd(fev),
+  avg_fev = mean(fev_sec),
+  sd_fev = sd(fev_sec),
   avg_asthma = mean(asthma),
   sd_asthma = sd(asthma)
 ), by = smoke_gas_exposure]
@@ -190,7 +194,7 @@ The dataset seems to be good.
 ```{r}
 #scatter plot
 ind_reg %>%
-    ggplot(mapping = aes(x = bmi, y = fev)) + 
+    ggplot(mapping = aes(x = bmi, y = fev_sec)) + 
     geom_point(mapping = aes(color = townname)) + 
     geom_smooth(method = "lm", color = "black", size = 0.5) +
     facet_wrap(~ townname, nrow = 5) +
@@ -206,7 +210,7 @@ Based the graph, there was a positive association between BMI and forced expiato
 ```{r}
 #histograms of FEV by BMI
 ind_reg %>%
-    ggplot(mapping = aes(x = fev)) + 
+    ggplot(mapping = aes(x = fev_sec)) + 
     geom_histogram(mapping = aes (fill = obesity_level)) +
     scale_fill_brewer(palette = "BuPu") +
     labs(
@@ -220,7 +224,7 @@ The normal and obese obesity level almost followed a normal distribution. And fo
 ```{r}
 #histograms of FEV by smoke/gas exposure
 ind_reg %>%
-    ggplot(mapping = aes(x = fev)) + 
+    ggplot(mapping = aes(x = fev_sec)) + 
     geom_histogram(mapping = aes (fill = smoke_gas_exposure)) +
     scale_fill_brewer(palette = "BuPu") +
     labs(
@@ -251,7 +255,7 @@ Among all obesity levels, exposure of gas were the greatest part based on the ba
 #statistical summary of fev by bmi
 ind_reg %>%
     ggplot() +
-    stat_summary(mapping = aes(x = obesity_level, y = fev),
+    stat_summary(mapping = aes(x = obesity_level, y = fev_sec),
                  fun.min = min,
                  fun.max = max,
                  fun = median) +
@@ -266,7 +270,7 @@ The statistical summary indicated that the normal group had the greatest range w
 ```{r}
 ind_reg %>%
     ggplot() +
-    stat_summary(mapping = aes(x = smoke_gas_exposure, y = fev),
+    stat_summary(mapping = aes(x = smoke_gas_exposure, y = fev_sec),
                  fun.min = min,
                  fun.max = max,
                  fun = median) +
@@ -298,7 +302,7 @@ The dots on the map corresponded to each CHS community. Mira Loma The CHS commun
 ### Choose a visualization to examine whether PM2.5 mass is associated with FEV.
 ```{r}
 ind_reg %>%
-    ggplot(mapping = aes(x = pm25_mass, y = fev)) + 
+    ggplot(mapping = aes(x = pm25_mass, y = fev_sec)) + 
     geom_point(mapping = aes(color = "blue")) +  
     geom_smooth(method = "lm", color = "black", size = 1) +
     labs(
